@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>球员管理系统</title>
+  <!-- 引入Layui CSS -->
+  <link href="//unpkg.com/layui@2.11.1/dist/css/layui.css" rel="stylesheet">
+  <style>
+    .demo-player-container {
+      width: 400px;
+      margin: 50px auto 0;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .layui-form-label {
+      width: 80px;
+    }
+    .layui-input-block {
+      margin-left: 110px;
+    }
+    .submit-btn {
+      width: 100%;
+    }
+    /* 新增背景图样式 */
+    body {
+      background-image: url('333.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      min-height: 100vh;
+      position: relative;
+      background-attachment: fixed; /* 保持桌面端的视差效果 */
+    }
+
+    /* 移动端优化 */
+    @media (max-width: 768px) {
+      body {
+        background-attachment: scroll; /* 移动端取消固定背景 */
+        background-position: 65% center; /* 突出显示球场中央区域 */
+      }
+    }
+
+    /* 表单容器优化 */
+    .demo-player-container {
+      width: 90%; /* 改为百分比宽度 */
+      max-width: 500px; /* 保持最大宽度 */
+      margin: 30px auto;
+      padding: 25px;
+      background-color: rgba(255, 255, 255, 0.5); /* 提高透明度 */
+      backdrop-filter: blur(2px); /* 添加毛玻璃效果 */
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    /* 保证超小屏幕的可读性 */
+    @media (max-width: 480px) {
+      .demo-player-container {
+        margin: 15px auto;
+        padding: 15px;
+      }
+      .layui-form-label {
+        width: 60px; /* 缩小标签宽度 */
+      }
+      .layui-input-block {
+        margin-left: 80px; /* 相应调整输入框间距 */
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="demo-player-container">
+  <form id="playerForm" class="layui-form">
+    <div class="layui-form-item">
+      <label class="layui-form-label">姓名</label>
+      <div class="layui-input-block">
+        <div class="layui-input-wrap">
+          <div class="layui-input-prefix">
+            <i class="layui-icon layui-icon-username"></i>
+          </div>
+          <input type="text" name="name" lay-verify="required" placeholder="请输入球员姓名"
+                 lay-reqtext="请填写球员姓名" autocomplete="off" class="layui-input" lay-affix="clear">
+        </div>
+      </div>
+    </div>
+
+    <div class="layui-form-item">
+      <label class="layui-form-label">年龄</label>
+      <div class="layui-input-block">
+        <div class="layui-input-wrap">
+          <div class="layui-input-prefix">
+            <i class="layui-icon layui-icon-date"></i>
+          </div>
+          <input type="number" name="age" lay-verify="required|number" placeholder="请输入球员年龄"
+                 lay-reqtext="请填写球员年龄" autocomplete="off" class="layui-input" min="16" max="50">
+        </div>
+      </div>
+    </div>
+
+    <div class="layui-form-item">
+      <label class="layui-form-label">位置</label>
+      <div class="layui-input-block">
+        <select name="position" lay-verify="required">
+          <option value="">请选择位置</option>
+          <option value="前锋">前锋</option>
+          <option value="中场">中场</option>
+          <option value="后卫">后卫</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="layui-form-item">
+      <label class="layui-form-label">进球数</label>
+      <div class="layui-input-block">
+        <div class="layui-input-wrap">
+          <div class="layui-input-prefix">
+            <i class="layui-icon layui-icon-fire"></i>
+          </div>
+          <input type="number" name="goals" placeholder="请输入进球数"
+                 autocomplete="off" class="layui-input" min="0">
+        </div>
+      </div>
+    </div>
+
+    <div class="layui-form-item">
+      <div class="layui-input-block">
+        <button class="layui-btn submit-btn" lay-submit lay-filter="playerForm">提交</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- 引入Layui JS -->
+<script src="//unpkg.com/layui@2.11.1/dist/layui.js"></script>
+<script>
+  layui.use(['form', 'layer'], function(){
+    var form = layui.form;
+    var layer = layui.layer;
+    var $ = layui.$;
+
+    // 表单提交
+    form.on('submit(playerForm)', function(data){
+      // 显示加载中
+      var loadIndex = layer.load(1);
+
+      // 处理数据
+      var playerData = data.field;
+      playerData.age = parseInt(playerData.age);
+      playerData.goals = parseInt(playerData.goals) || 0;
+
+      // 发送请求
+      $.ajax({
+        url: 'http://localhost:3000/api/players',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(playerData),
+        success: function(res) {
+          layer.close(loadIndex);
+          layer.msg('球员添加成功', {icon: 1});
+          $('#playerForm')[0].reset();
+          form.render(); // 重新渲染表单
+        },
+        error: function(err) {
+          layer.close(loadIndex);
+          layer.msg('提交失败: ' + (err.responseJSON?.message || err.statusText), {icon: 2});
+        }
+      });
+
+      return false; // 阻止表单跳转
+    });
+  });
+</script>
+</body>
+</html>
